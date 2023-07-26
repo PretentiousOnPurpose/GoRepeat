@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -16,7 +17,7 @@ type Calculation struct {
 }
 
 type CalcHistory struct {
-	calc     Calculation
+	calc     *Calculation
 	nextNode *CalcHistory
 	prevNode *CalcHistory
 }
@@ -58,10 +59,17 @@ func main() {
 	var operands []string
 	var res float64
 
+	root := &CalcHistory{nil, nil, nil}
+	currNode := root
+
 	fmt.Println("Calculator: An Advanced Take v1.0")
 	fmt.Println("------------------------")
 
 	for {
+		if currNode.calc != nil {
+			currNode = currNode.nextNode
+		}
+
 		fmt.Printf("Input cmd: ")
 		stdIn := bufio.NewReader(os.Stdin)
 		cmd, err := stdIn.ReadString('\n')
@@ -96,15 +104,27 @@ func main() {
 					res = n1 / n2
 				} else {
 					fmt.Printf("Result: Division by zero error\n")
+					res = math.Inf(-1)
 					break
 				}
 			}
 
 			// Add this calc to the history
+			currNode.calc = &Calculation{cmd, res}
+			currNode.nextNode = &CalcHistory{}
+			currNode.nextNode.prevNode = currNode
 
 			fmt.Printf("Result: %v\n", res)
-		} else {
+		} else if len(operands) == 2 {
 			// Process other commands
+			if strings.ToLower(strings.TrimSpace(operands[1])) == "history" {
+				if strings.ToLower(strings.TrimSpace(operands[0])) == "forward" {
+					root.printFwdHistory()
+				} else if strings.ToLower(strings.TrimSpace(operands[1])) == "backward" {
+					currNode.printFwdHistory()
+				}
+			}
+
 		}
 	}
 }
