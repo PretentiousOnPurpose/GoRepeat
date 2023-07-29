@@ -23,40 +23,40 @@ type CalcHistory struct {
 	prevNode *CalcHistory
 }
 
-func (calc *Calculation) printCalculation() {
-	fmt.Printf("%s = %v\n", calc.cmd, calc.res)
+func (calc *Calculation) printCalculation(conn net.Conn) {
+	fmt.Fprintf(conn, "%s = %v\n", calc.cmd, calc.res)
 }
 
-func (root *CalcHistory) printFwdHistory() {
+func (root *CalcHistory) printFwdHistory(conn net.Conn) {
 	currNode := root
-	fmt.Println("---------------------------------")
+	fmt.Fprintln(conn, "---------------------------------")
 
 	for i := 0; ; i++ {
-		fmt.Printf("Calc %d: ", i)
-		currNode.calc.printCalculation()
+		fmt.Fprintf(conn, "Calc %d: ", i)
+		currNode.calc.printCalculation(conn)
 		currNode = currNode.nextNode
 
 		if currNode == nil {
 			break
 		}
 	}
-	fmt.Println("---------------------------------")
+	fmt.Fprintln(conn, "---------------------------------")
 }
 
-func (lastNode *CalcHistory) printBwdHistory() {
+func (lastNode *CalcHistory) printBwdHistory(conn net.Conn) {
 	currNode := lastNode
-	fmt.Println("---------------------------------")
+	fmt.Fprintln(conn, "---------------------------------")
 
 	for i := 0; ; i++ {
-		fmt.Printf("Calc %d: ", i)
-		currNode.calc.printCalculation()
+		fmt.Fprintf(conn, "Calc %d: ", i)
+		currNode.calc.printCalculation(conn)
 		currNode = currNode.prevNode
 
 		if currNode == nil {
 			break
 		}
 	}
-	fmt.Println("---------------------------------")
+	fmt.Fprintln(conn, "---------------------------------")
 }
 
 func main() {
@@ -100,6 +100,7 @@ func handle(conn net.Conn) {
 		// }
 
 		operands = strings.Split(cmd, " ")
+		fmt.Fprintf(conn, "Your cmd: %v\n", operands)
 
 		if len(operands) == 3 {
 
@@ -146,9 +147,11 @@ func handle(conn net.Conn) {
 			// Process other commands
 			if strings.ToLower(strings.TrimSpace(operands[1])) == "history" {
 				if strings.ToLower(strings.TrimSpace(operands[0])) == "forward" {
-					root.printFwdHistory()
+					fmt.Fprintf(conn, "Entering Forward Region\n")
+					root.printFwdHistory(conn)
 				} else if strings.ToLower(strings.TrimSpace(operands[0])) == "backward" {
-					currNode.printBwdHistory()
+					fmt.Fprintf(conn, "Entering Backward Region\n")
+					currNode.printBwdHistory(conn)
 				}
 			}
 
